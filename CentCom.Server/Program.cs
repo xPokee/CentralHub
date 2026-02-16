@@ -92,20 +92,7 @@ internal class Program
                 }
 
                 // Add ban services to contact relevant APIs
-                services.AddHttpClient<BeeBanService>();
-                services.AddSingleton<VgBanService>();
-                services.AddHttpClient<YogBanService>();
-                services.AddHttpClient<TGMCBanService>();
-                services.AddHttpClient<TgBanService>();
                 services.AddHttpClient<StandardProviderService>();
-
-                // Special consideration for fulp and the SSL woes
-                var fulpClient = services.AddHttpClient<FulpBanService>();
-                if (config.GetSection("sourceConfig").GetValue<bool>("allowFulpExpiredSSL"))
-                    fulpClient.ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler()
-                    {
-                        ServerCertificateCustomValidationCallback = (_, _, _, _) => true
-                    });
 
                 // Add ban parsers
                 var parsers = AppDomain.CurrentDomain.GetAssemblies().Aggregate(new List<Type>(), (curr, next) =>
