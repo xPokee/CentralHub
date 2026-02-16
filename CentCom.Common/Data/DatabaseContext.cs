@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using CentCom.Common.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.AspNetCore.Identity;
 
 namespace CentCom.Common.Data;
 
@@ -26,6 +27,15 @@ public abstract class DatabaseContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        modelBuilder.Entity<IdentityRole>(entity =>
+        {
+            entity.ToTable("AspNetRoles");
+            entity.HasKey(r => r.Id);
+            entity.Property(r => r.Name).HasMaxLength(256);
+            entity.Property(r => r.NormalizedName).HasMaxLength(256);
+            entity.HasIndex(r => r.NormalizedName).IsUnique();
+        });
 
         modelBuilder.Entity<Ban>(entity =>
         {
