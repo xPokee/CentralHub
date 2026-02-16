@@ -1,14 +1,15 @@
-# CentCom
+# CentralHub
 
-CentCom is a suite of software used for implementing a data warehouse of bans for Space Station 13 from a variety of
+Based off of [Bobbah's CentCom](https://github.com/bobbah/CentCom), with the exception being that this one is focused on ERP forks of SS13 servers.
+CentralHub is a suite of software used for implementing a data warehouse of bans for Space Station 13 from a variety of
 public sources. It is capable of ingesting data from several public ban lists, and provides an API through which to
 search these collected records.
 
-Considering contributing your server's bans to CentCom? Check
+Considering contributing your server's bans to CentralHub? Check
 out [our onboarding documentation](https://hackmd.io/@centcom/SJWnjsEUO) to help inform you and answer questions you may
 have.
 
-**There is a central instance of CentCom running at https://centcom.melonmesa.com, where you can also find the compiled
+**There is a central instance of CentralHub running at https://centcom.melonmesa.com, where you can also find the compiled
 Swagger documentation to read about and experiment with the API.**
 
 ## Exporter
@@ -17,31 +18,31 @@ Looking to run the standardized ban exporter? [See the documentation here](CentC
 
 ## Setup
 
-To run your own local instance of CentCom, you must have the following...
+To run your own local instance of CentralHub, you must have the following...
 
 - A supported database to store the ban data within (Postgres, MySql, MariaDB). You will need to create a database for
-  the CentCom data, and users for the parsing server and API server.
-- A machine to run the CentCom Parsing Server
-- A machine to run the CentCom API Server (this could be the same machine as the parsing server)
+  the CentralHub data, and users for the parsing server and API server.
+- A machine to run the CentralHub Parsing Server
+- A machine to run the CentralHub API Server (this could be the same machine as the parsing server)
 
 Once you have collected these things, you must then:
 
-- Get the latest CentCom release
+- Get the latest CentralHub release
 - Edit the ``hostsettings.json`` of the API server to configure the URLs that the server will bind to. This should be an
   HTTPS url. **By default, it will bind to any IP on port 6658.**
 - Edit the appconfig.json of both the parsing server and API server to be configured for your database. You must provide
   a connection string, as well as the type of the database. This can be one of ``postgres``, ``mysql``, or ``mariadb``
-  .  **I would strongly recommend having two different accounts/roles on your database for CentCom, one for the parsing
-  server which has write access to the CentCom database, and one for the API server which can only read. This helps to
+  .  **I would strongly recommend having two different accounts/roles on your database for CentralHub, one for the parsing
+  server which has write access to the CentralHub database, and one for the API server which can only read. This helps to
   isolate any possible security concerns./**
 
 Finally:
 
-- Run the parsing server first (``CentCom.Server``) to create the database schema and apply any necessary migrations to
+- Run the parsing server first (``CentralHub.Server``) to create the database schema and apply any necessary migrations to
   the database. This will also begin to populate the database based on the parsing schedule, which by default will parse
   all ban sources for new bans every 5 minutes except for at 00 and 30 minutes of every hour, at which time a full ban
   pass will occur.
-- AFTER the migration/database setup has occurred successfully, you can now start the API server (``CentCom.API``)
+- AFTER the migration/database setup has occurred successfully, you can now start the API server (``CentralHub.API``)
   without any concerns. This server will now take API requests, the documentation of which you can view at
   the ``/swagger`` pages.
 
@@ -54,12 +55,6 @@ hour (``XX:05``, ``XX:10``...) for a latest refresh (getting all new bans), exce
 will be full refreshes. At this point the entire source set is taken from each ban source and compared with what is
 stored in the database, at which point any differences will be resolved.
 
-## Sponsors
-
-![Alt text](docs/sentry-wordmark.png)
-
-Thanks to [Sentry](https://sentry.io/welcome/) for sponsoring CentCom! Their platform helps to support error logging and improve performance on the primary hosted instance of CentCom.
-
 ## Contributing
 
 PRs can be opened on this repository to propose changes to the codebase. There are a few things to note...
@@ -67,8 +62,8 @@ PRs can be opened on this repository to propose changes to the codebase. There a
 ### Adding a New Ban Source
 
 If you are going to add an additional ban source, you typically have to add two new objects: a subclass
-of ``CentCom.Server.BanSources.BanParser``, which is **required**, and optionally a ``BanService``
-in ``CentCom.Server.Services`` which helps to isolate the code used for parsing web pages and other forms of online
+of ``CentralHub.Server.BanSources.BanParser``, which is **required**, and optionally a ``BanService``
+in ``CentralHub.Server.Services`` which helps to isolate the code used for parsing web pages and other forms of online
 resources.
 
 When you sub-class ``BanParser``, you **must** override the ``Sources`` field to provide a definition of the ban sources
@@ -90,20 +85,20 @@ through and storing bans. You essentially just have to provide it a means of get
 
 ### Making Changes to Database Objects
 
-If you make any changes to database objects (typically types in CentCom.Common.Models), you will need to generate a
+If you make any changes to database objects (typically types in CentralHub.Common.Models), you will need to generate a
 migration. You can do this by installing ``dotnet-ef`` tools using ``dotnet tool install --global dotnet-ef`` in a
 terminal, and then by running [add-migration.bat](add-migration.bat) with a single argument which is the name of the
 migration to generate.
 
 Ex: ``./add-migration AddCoolPR`` will generate a migration for all data sources called ``AddCoolPR``.
 
-*Note: You must add a migration for each database type supported, these types should be in ``CentCom.Common.Data``,
+*Note: You must add a migration for each database type supported, these types should be in ``CentralHub.Common.Data``,
 subclassed from ``DatabaseContext``. Any new ``DatabaseContext`` subclasses should be added to ``add-migration.bat``.*
 
 ### Adding a New Database Backend
 
 If you wish to support an additional database backend, you will need to create a new subclass
-of ``CentCom.Common.Data.DatabaseContext``. If necessary, you can overload how model types are stored in the new
+of ``CentralHub.Common.Data.DatabaseContext``. If necessary, you can overload how model types are stored in the new
 database backend by providing an override for the ``OnModelCreating`` method of ``DatabaseContext``, which you can see
-an example of in ``CentCom.Common.Data.MySqlDbContext``. As well as this, you will need to add a migration for your new
+an example of in ``CentralHub.Common.Data.MySqlDbContext``. As well as this, you will need to add a migration for your new
 database backend. You can do so using the same format as found in '*Making Changes to Database Objects*' above.
