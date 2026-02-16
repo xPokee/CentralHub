@@ -46,6 +46,8 @@ Finally:
   without any concerns. This server will now take API requests, the documentation of which you can view at
   the ``/swagger`` pages.
 
+  CentralHub differs from CentCom in that it requires users to login to protect the safety of the banned users. The default login is Sudo and Password. I HIGHLY recommend changing this before doing a production-scale run of CentralHub. You are able to create admin accounts with the sudo account, admins can create user accounts. I recommend giving admin accounts to the hosts of involved codebases and having them give out user accounts to their staff.
+
 ## FAQ
 
 ### How often does the parser run?

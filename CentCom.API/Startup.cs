@@ -12,6 +12,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
+using Microsoft.AspNetCore.Identity;
+
 
 namespace CentCom.API;
 
@@ -46,10 +48,13 @@ public class Startup(IConfiguration configuration)
                 break;
         }
 
+        services.AddIdentity<IdentityUser, IdentityRole>()
+            .AddEntityFrameworkStores<DatabaseContext>()
+            .AddDefaultTokenProviders();
 
         services.AddTransient<IBanService, BanService>();
         services.AddTransient<IBanSourceService, BanSourceService>();
-        
+
         // Add status service
         var statusService = new AppStatusService();
         services.AddSingleton<IAppStatusService>(statusService);
@@ -71,7 +76,7 @@ public class Startup(IConfiguration configuration)
     }
 
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-    public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+    public async void Configure(IApplicationBuilder app, IWebHostEnvironment env)
     {
         if (env.IsDevelopment())
         {
@@ -91,11 +96,41 @@ public class Startup(IConfiguration configuration)
 
         app.UseRouting();
 
+        app.UseAuthentication();
         app.UseAuthorization();
+
+        using (var scope = app.ApplicationServices.CreateScope())
+        {
+            var services = scope.ServiceProvider;
+            var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
+            string[] roles = { "Sudo", "Admin", "User" };
+            foreach (var role in roles)
+            {
+                if (!await roleManager.RoleExistsAsync(role))
+                {
+                    await roleManager.CreateAsync(new IdentityRole(role));
+                }
+            }
+        }
+
+        var userManager = app.ApplicationServices.GetRequiredService<UserManager<IdentityUser>>();
+        string username = "Sudo";
+        string password = "Password";
+        if (await userManager.FindByNameAsync(username) == null)
+        {
+            var user = new IdentityUser
+            {
+                UserName = username,
+                Email = null,
+                EmailConfirmed = false
+            };
+            await userManager.CreateAsync(user, password);
+            await userManager.AddToRoleAsync(user, "Sudo");
+        }
 
         app.UseEndpoints(endpoints =>
         {
-            endpoints.MapControllerRoute("default", "{controller=Viewer}/{action=Index}/{id?}");
+            endpoints.MapControllerRoute("default", "{controller=Viewer}/{action=Login}/{id?}");
         });
     }
 }
