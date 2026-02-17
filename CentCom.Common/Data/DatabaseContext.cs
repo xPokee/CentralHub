@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 using CentCom.Common.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
-using Microsoft.AspNetCore.Identity;
 
 namespace CentCom.Common.Data;
 
@@ -27,7 +26,6 @@ public abstract class DatabaseContext : DbContext
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-
 
         modelBuilder.Entity<Ban>(entity =>
         {

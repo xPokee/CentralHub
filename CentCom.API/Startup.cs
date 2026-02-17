@@ -12,9 +12,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
-using CentCom.API.Data;
 
 namespace CentCom.API;
 
@@ -25,13 +22,6 @@ public class Startup(IConfiguration configuration)
     // This method gets called by the runtime. Use this method to add services to the container.
     public void ConfigureServices(IServiceCollection services)
     {
-	services.AddDbContext<DatabaseContext>(options =>
-	    options.UseNpgsql(Configuration.GetConnectionString("DefaultConnection")));
-
-	services.AddIdentity<IdentityUser, IdentityRole>()
-	    .AddEntityFrameworkStores<AuthDbContext>()
-	    .AddDefaultTokenProviders();
-
         services.AddControllersWithViews().AddJsonOptions(x =>
         {
             x.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
@@ -55,15 +45,11 @@ public class Startup(IConfiguration configuration)
                 services.AddDbContext<DatabaseContext, MySqlDbContext>();
                 break;
         }
-	services.AddDbContext<AuthDbContext>();
 
-        services.AddIdentity<IdentityUser, IdentityRole>()
-            .AddEntityFrameworkStores<AuthDbContext>()
-            .AddDefaultTokenProviders();
 
         services.AddTransient<IBanService, BanService>();
         services.AddTransient<IBanSourceService, BanSourceService>();
-
+        
         // Add status service
         var statusService = new AppStatusService();
         services.AddSingleton<IAppStatusService>(statusService);
@@ -85,7 +71,7 @@ public class Startup(IConfiguration configuration)
     }
 
     // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-    public async void Configure(IApplicationBuilder app, IWebHostEnvironment env)
+    public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
     {
         if (env.IsDevelopment())
         {
@@ -105,44 +91,11 @@ public class Startup(IConfiguration configuration)
 
         app.UseRouting();
 
-        app.UseAuthentication();
         app.UseAuthorization();
-
-        using (var scope = app.ApplicationServices.CreateScope())
-        {
-            var services = scope.ServiceProvider;
-            var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
-            string[] roles = { "Sudo", "Admin", "User" };
-            foreach (var role in roles)
-            {
-                if (!await roleManager.RoleExistsAsync(role))
-                {
-                    await roleManager.CreateAsync(new IdentityRole(role));
-                }
-            }
-        }
-
-        using (var scope = app.ApplicationServices.CreateScope())
-        {
-            var userManager = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
-            string username = "sudo";
-            string password = "password";
-            if (await userManager.FindByNameAsync(username) == null)
-            {
-                var user = new IdentityUser
-                {
-                    UserName = username,
-                    Email = null,
-                    EmailConfirmed = false
-                };
-                await userManager.CreateAsync(user, password);
-                await userManager.AddToRoleAsync(user, "Sudo");
-            }
-        }
 
         app.UseEndpoints(endpoints =>
         {
-            endpoints.MapControllerRoute("default", "{controller=Viewer}/{action=Login}/{id?}");
+            endpoints.MapControllerRoute("default", "{controller=Viewer}/{action=Index}/{id?}");
         });
     }
 }

@@ -3,19 +3,9 @@ using System.Threading.Tasks;
 using CentCom.API.Models;
 using CentCom.API.Services;
 using CentCom.Common;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CentCom.API.Controllers;
-
-[Authorize(Roles = "User, Admin, Sudo")]
-public class HomeController : Controller
-{
-    public IActionResult Index()
-    {
-        return View();
-    }
-}
 
 [ApiExplorerSettings(IgnoreApi = true)]
 public class ViewerController : Controller
