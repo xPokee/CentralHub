@@ -38,11 +38,11 @@ Once you have collected these things, you must then:
 
 Finally:
 
-- Run the parsing server first (``CentralHub.Server``) to create the database schema and apply any necessary migrations to
+- Run the parsing server first (``CentCom.Server``) to create the database schema and apply any necessary migrations to
   the database. This will also begin to populate the database based on the parsing schedule, which by default will parse
   all ban sources for new bans every 5 minutes except for at 00 and 30 minutes of every hour, at which time a full ban
   pass will occur.
-- AFTER the migration/database setup has occurred successfully, you can now start the API server (``CentralHub.API``)
+- AFTER the migration/database setup has occurred successfully, you can now start the API server (``CentCom.API``)
   without any concerns. This server will now take API requests, the documentation of which you can view at
   the ``/swagger`` pages.
 
@@ -64,8 +64,8 @@ PRs can be opened on this repository to propose changes to the codebase. There a
 ### Adding a New Ban Source
 
 If you are going to add an additional ban source, you typically have to add two new objects: a subclass
-of ``CentralHub.Server.BanSources.BanParser``, which is **required**, and optionally a ``BanService``
-in ``CentralHub.Server.Services`` which helps to isolate the code used for parsing web pages and other forms of online
+of ``CentCom.Server.BanSources.BanParser``, which is **required**, and optionally a ``BanService``
+in ``CentCom.Server.Services`` which helps to isolate the code used for parsing web pages and other forms of online
 resources.
 
 When you sub-class ``BanParser``, you **must** override the ``Sources`` field to provide a definition of the ban sources
@@ -87,20 +87,20 @@ through and storing bans. You essentially just have to provide it a means of get
 
 ### Making Changes to Database Objects
 
-If you make any changes to database objects (typically types in CentralHub.Common.Models), you will need to generate a
+If you make any changes to database objects (typically types in CentCom.Common.Models), you will need to generate a
 migration. You can do this by installing ``dotnet-ef`` tools using ``dotnet tool install --global dotnet-ef`` in a
 terminal, and then by running [add-migration.bat](add-migration.bat) with a single argument which is the name of the
 migration to generate.
 
 Ex: ``./add-migration AddCoolPR`` will generate a migration for all data sources called ``AddCoolPR``.
 
-*Note: You must add a migration for each database type supported, these types should be in ``CentralHub.Common.Data``,
+*Note: You must add a migration for each database type supported, these types should be in ``CentCom.Common.Data``,
 subclassed from ``DatabaseContext``. Any new ``DatabaseContext`` subclasses should be added to ``add-migration.bat``.*
 
 ### Adding a New Database Backend
 
 If you wish to support an additional database backend, you will need to create a new subclass
-of ``CentralHub.Common.Data.DatabaseContext``. If necessary, you can overload how model types are stored in the new
+of ``CentCom.Common.Data.DatabaseContext``. If necessary, you can overload how model types are stored in the new
 database backend by providing an override for the ``OnModelCreating`` method of ``DatabaseContext``, which you can see
-an example of in ``CentralHub.Common.Data.MySqlDbContext``. As well as this, you will need to add a migration for your new
+an example of in ``CentCom.Common.Data.MySqlDbContext``. As well as this, you will need to add a migration for your new
 database backend. You can do so using the same format as found in '*Making Changes to Database Objects*' above.
