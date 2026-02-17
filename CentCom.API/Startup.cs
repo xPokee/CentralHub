@@ -13,7 +13,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 using Microsoft.AspNetCore.Identity;
-
+using Microsoft.EntityFrameworkCore;
+using CentCom.API.Data;
 
 namespace CentCom.API;
 
@@ -24,6 +25,13 @@ public class Startup(IConfiguration configuration)
     // This method gets called by the runtime. Use this method to add services to the container.
     public void ConfigureServices(IServiceCollection services)
     {
+	services.AddDbContext<DatabaseContext>(options =>
+	    options.UseNpgsql(Configuration.GetConnectionString("DefaultConnection")));
+
+	services.AddIdentity<IdentityUser, IdentityRole>()
+	    .AddEntityFrameworkStores<AuthDbContext>()
+	    .AddDefaultTokenProviders();
+
         services.AddControllersWithViews().AddJsonOptions(x =>
         {
             x.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
@@ -47,9 +55,10 @@ public class Startup(IConfiguration configuration)
                 services.AddDbContext<DatabaseContext, MySqlDbContext>();
                 break;
         }
+	services.AddDbContext<AuthDbContext>();
 
         services.AddIdentity<IdentityUser, IdentityRole>()
-            .AddEntityFrameworkStores<DatabaseContext>()
+            .AddEntityFrameworkStores<AuthDbContext>()
             .AddDefaultTokenProviders();
 
         services.AddTransient<IBanService, BanService>();
@@ -102,7 +111,7 @@ public class Startup(IConfiguration configuration)
         using (var scope = app.ApplicationServices.CreateScope())
         {
             var services = scope.ServiceProvider;
-            var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
+            var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
             string[] roles = { "Sudo", "Admin", "User" };
             foreach (var role in roles)
             {
@@ -113,19 +122,22 @@ public class Startup(IConfiguration configuration)
             }
         }
 
-        var userManager = app.ApplicationServices.GetRequiredService<UserManager<IdentityUser>>();
-        string username = "Sudo";
-        string password = "Password";
-        if (await userManager.FindByNameAsync(username) == null)
+        using (var scope = app.ApplicationServices.CreateScope())
         {
-            var user = new IdentityUser
+            var userManager = scope.ServiceProvider.GetRequiredService<UserManager<IdentityUser>>();
+            string username = "sudo";
+            string password = "password";
+            if (await userManager.FindByNameAsync(username) == null)
             {
-                UserName = username,
-                Email = null,
-                EmailConfirmed = false
-            };
-            await userManager.CreateAsync(user, password);
-            await userManager.AddToRoleAsync(user, "Sudo");
+                var user = new IdentityUser
+                {
+                    UserName = username,
+                    Email = null,
+                    EmailConfirmed = false
+                };
+                await userManager.CreateAsync(user, password);
+                await userManager.AddToRoleAsync(user, "Sudo");
+            }
         }
 
         app.UseEndpoints(endpoints =>
